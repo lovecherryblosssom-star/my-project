@@ -286,7 +286,16 @@ const flowerImages = {
                 p.classList.add('rain-drop');
             } else if (t === 'snowflake') {
                 p.classList.add('snowflake');
-            } else {
+                } else {
+                t = types[mode];
+                
+                // This tells the ceiling to show ONLY when wisteria is active
+                const ceiling = document.getElementById('wisteria-ceiling');
+                if (ceiling) {
+                    ceiling.style.display = (t === 'wisteria') ? 'block' : 'none';
+                }
+
+                p.classList.add(`petal-${t}`);
         function updateWeatherEffects(currentType) {
     const ceiling = document.getElementById('wisteria-ceiling');
     
