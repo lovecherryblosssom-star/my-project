@@ -186,12 +186,40 @@
 
         // ─── Ceiling visibility helper ───
         function updateCeiling() {
-            const ceiling = document.getElementById('wisteria-ceiling');
-            if (!ceiling) return;
-            // Show only when wisteria is the current mode AND it's not storming
-            const isWisteria = types[mode] === 'wisteria';
-            ceiling.style.display = (isWisteria && !storm) ? 'block' : 'none';
-        }
+    const ceiling = document.getElementById('wisteria-ceiling');
+    if (!ceiling) return;
+    const isWisteria = types[mode] === 'wisteria';
+    if (isWisteria && !storm) {
+        const img = new Image();
+        img.onload = function () {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const d = id.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    if (d[i] > 210 && d[i+1] > 210 && d[i+2] > 210) {
+                        d[i+3] = 0;
+                    }
+                }
+                ctx.putImageData(id, 0, 0);
+                ceiling.style.backgroundImage = `url(${canvas.toDataURL()})`;
+                ceiling.style.backgroundColor = 'transparent';
+                ceiling.style.display = 'block';
+            } catch(e) {
+                ceiling.style.backgroundColor = '#f7f3fa';
+                ceiling.style.display = 'block';
+            }
+        };
+        img.onerror = () => { ceiling.style.display = 'none'; };
+        img.src = 'images/wisteria3.png';
+    } else {
+        ceiling.style.display = 'none';
+    }
+}
 
         // ===== POEM / INDEX =====
         function buildIndex() {
