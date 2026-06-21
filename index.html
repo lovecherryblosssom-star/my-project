@@ -274,13 +274,13 @@
             document.getElementById('poem-index').style.display = 'none';
             document.getElementById('toggle-index').innerText = '▸ Browse All Titles';
             const n = novels[currentNovel];
-            document.getElementById('view').innerHTML = `
-                <div class="novel-title">${n.t}</div>
-                <p style="line-height:1.8;">${n.d}</p>
-                <div style="display:flex;gap:15px;justify-content:center;margin-top:30px;">
-                    <button class="action-btn" onclick="prevNovel()">← Previous</button>
-                    <button class="action-btn" onclick="nextNovel()">Next →</button>
-                </div>`;
+            document.getElementById('inner-view').innerHTML = `
+            <div class="novel-title">${n.t}</div>
+            <p style="line-height:1.8;">${n.d}</p>
+            <div style="display:flex;gap:15px;justify-content:center;margin-top:30px;">
+                 <button class="action-btn" onclick="prevNovel()">← Previous</button>
+                 <button class="action-btn" onclick="nextNovel()">Next →</button>
+            </div>`;
         }
 
         function nextNovel() { currentNovel = (currentNovel + 1) % novels.length; showNovels(); }
