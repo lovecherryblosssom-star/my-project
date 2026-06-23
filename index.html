@@ -73,8 +73,7 @@
         .petal-tigerlily   { width:20px;height:24px;background:#ff8c00;border-radius:30% 70% 40% 60%;box-shadow:0 0 14px #ffa500; }
         .rain-drop  { width:2px;height:55px;background:linear-gradient(to bottom,transparent,#7ba7c7);opacity:0.85;box-shadow:0 0 6px #a8d0e6;border-radius:2px; }
         .snowflake  { width:6px;height:6px;background:white;border-radius:50%;filter:blur(0.5px);box-shadow:0 0 5px #ffffff;opacity:0.85; }
-
-        /* layout */
+/* layout */
         header { text-align:center;padding:30px 20px 20px;z-index:10;position:relative; }
         h1 { color:var(--lavender);letter-spacing:8px;font-size:2.2rem;font-weight:400; }
         .subtitle { font-style:italic;opacity:0.8;color:var(--blue); }
@@ -95,6 +94,19 @@
         .novel-title { color:var(--parchment);font-size:1.8rem;margin-bottom:20px;border-bottom:1px solid var(--glow);padding-bottom:10px; }
         .action-btn { background:var(--lavender);color:white;border:none;padding:10px 24px;margin:5px;font-weight:bold;cursor:pointer;text-transform:uppercase;letter-spacing:2px;border-radius:40px;transition:0.3s; }
         .action-btn:hover { background:#8a7eab; }
+        .pearls-compose { display:flex; flex-direction:column; gap:12px; margin-bottom:30px; }
+        #pearl-input { width:100%; min-height:90px; padding:14px; border-radius:16px; border:1px solid var(--glow); background:rgba(255,255,255,0.5); font-family:Georgia, serif; font-size:1rem; color:var(--text); resize:vertical; }
+        #pearl-input:focus { outline:none; border-color:var(--lavender); }
+        .pearls-status { text-align:center; color:var(--blue); font-style:italic; opacity:0.8; padding:30px 0; }
+        .pearl-item { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:16px 0; border-top:1px dashed var(--glow); }
+        .pearl-item:first-child { border-top:none; }
+        .pearl-item.editing { flex-direction:column; align-items:stretch; }
+        .pearl-item.editing .pearl-actions { justify-content:flex-end; }
+        .pearl-content { white-space:pre-wrap; line-height:1.7; font-size:1rem; flex:1; }
+        .pearl-actions { display:flex; gap:8px; flex-shrink:0; }
+        .pearl-icon-btn { background:none; border:none; color:var(--lavender); cursor:pointer; font-size:1rem; opacity:0.7; transition:0.3s; padding:2px 4px; }
+        .pearl-icon-btn:hover { opacity:1; }
+        .pearl-edit-input { width:100%; min-height:80px; padding:10px; border-radius:12px; border:1px solid var(--lavender); font-family:Georgia, serif; font-size:1rem; color:var(--text); resize:vertical; }
     </style>
 </head>
 <body>
@@ -111,6 +123,7 @@
         <nav>
             <button id="poetry-nav" class="active" onclick="showPoetry()">The Aśk Archive</button>
             <button id="novel-nav" onclick="showNovels()">The Novel Codex</button>
+            <button id="pearls-nav" onclick="showPearls()">Lotus-Moon Pearls</button>
         </nav>
 
         <button class="index-toggle" id="toggle-index">▸ Browse All Titles</button>
@@ -124,8 +137,8 @@
             </div>
         </div>
     </div>
-
-    <script src="poems.js"></script>
+<script src="poems.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
         // ===== NOVELS =====
@@ -156,8 +169,7 @@
     138,139,140,
     149,150,152,154,155,156
         ];
-
-        // ===== FLOWER IMAGES =====
+// ===== FLOWER IMAGES =====
         const flowerImages = {
             rose:        ["images/rose1.png", "images/rose2.png", "images/rose3.png"],
             sakura:      ["images/sakura1.png", "images/sakura2.png"],
@@ -220,8 +232,7 @@
         ceiling.style.display = 'none';
     }
 }
-
-        // ===== POEM / INDEX =====
+ // ===== POEM / INDEX =====
         function buildIndex() {
             const c = document.getElementById('poem-index');
             if (!c || typeof poetryCollection === 'undefined') return;
@@ -291,7 +302,125 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ===== WEATHER ENGINE =====
+        // ===== LOTUSMOON PEARLS =====
+        const PEARLS_URL = 'https://uwdqtmvpykhcntcqnmtu.supabase.co';
+        const PEARLS_KEY = 'sb_publishable_14QT75f5ej18OOxJDnt6cA_bDQCqrm8';
+        const pearlsClient = supabase.createClient(PEARLS_URL, PEARLS_KEY);
+        const PEARLS_PASSCODE = 'nyx-9597';
+        let pearlsUnlocked = false;
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showPearls() {
+            if (!pearlsUnlocked) {
+                const entered = prompt('Enter the passcode to open Lotus-Moon Pearls:');
+                if (entered === null) return;
+                if (entered !== PEARLS_PASSCODE) {
+                    alert('Incorrect passcode.');
+                    return;
+                }
+                pearlsUnlocked = true;
+            }
+            setActive('pearls-nav');
+            document.getElementById('poem-index').style.display = 'none';
+            document.getElementById('toggle-index').innerText = '▸ Browse All Titles';
+            document.getElementById('inner-view').innerHTML = `
+                <div class="pearls-compose">
+                    <textarea id="pearl-input" placeholder="A stray thought, a line, an idea..."></textarea>
+                    <button class="action-btn" onclick="savePearl()">Save</button>
+                </div>
+                <div id="pearls-list"><p class="pearls-status">Loading...</p></div>`;
+            loadPearls();
+        }
+
+        async function loadPearls() {
+            const list = document.getElementById('pearls-list');
+            try {
+                const { data, error } = await pearlsClient
+                    .from('pearls')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+                renderPearls(data);
+            } catch (e) {
+                list.innerHTML = '<p class="pearls-status">Couldn\'t load pearls. Check your Supabase setup.</p>';
+            }
+        }
+
+        function renderPearls(rows) {
+            const list = document.getElementById('pearls-list');
+            if (!rows || rows.length === 0) {
+                list.innerHTML = '<p class="pearls-status">No pearls yet.</p>';
+                return;
+            }
+            list.innerHTML = rows.map(row => `
+                <div class="pearl-item" data-id="${row.id}">
+                    <div class="pearl-content">${escapeHtml(row.content)}</div>
+                    <div class="pearl-actions">
+                        <button class="pearl-icon-btn" onclick="startEditPearl(${row.id})" title="Edit">✎</button>
+                        <button class="pearl-icon-btn" onclick="deletePearl(${row.id})" title="Delete">✕</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        async function savePearl() {
+            const input = document.getElementById('pearl-input');
+            const text = input.value.trim();
+            if (!text) return;
+            try {
+                const { error } = await pearlsClient.from('pearls').insert({ content: text });
+                if (error) throw error;
+                input.value = '';
+                loadPearls();
+            } catch (e) {
+                alert('Could not save. Check your Supabase setup.');
+            }
+        }
+
+        function startEditPearl(id) {
+            const item = document.querySelector(`.pearl-item[data-id="${id}"]`);
+            if (!item) return;
+            const current = item.querySelector('.pearl-content').innerText;
+            item.classList.add('editing');
+            item.innerHTML = `
+                <textarea class="pearl-edit-input">${escapeHtml(current)}</textarea>
+                <div class="pearl-actions">
+                    <button class="pearl-icon-btn" onclick="saveEditPearl(${id})" title="Save">✓</button>
+                    <button class="pearl-icon-btn" onclick="loadPearls()" title="Cancel">✕</button>
+                </div>`;
+        }
+
+        async function saveEditPearl(id) {
+            const item = document.querySelector(`.pearl-item[data-id="${id}"]`);
+            const text = item.querySelector('.pearl-edit-input').value.trim();
+            if (!text) return;
+            try {
+                const { error } = await pearlsClient.from('pearls').update({ content: text }).eq('id', id);
+                if (error) throw error;
+                loadPearls();
+            } catch (e) {
+                alert('Could not save changes.');
+            }
+        }
+
+        async function deletePearl(id) {
+            if (!confirm('Delete this pearl?')) return;
+            try {
+                const { error } = await pearlsClient.from('pearls').delete().eq('id', id);
+                if (error) throw error;
+                loadPearls();
+            } catch (e) {
+                alert('Could not delete.');
+            }
+        }
+// ===== WEATHER ENGINE =====
         (function () {
             const container = document.getElementById('weather-container');
 
@@ -338,8 +467,7 @@
                 const dur = (particleType === 'rain') ? 1.2 : 6 + Math.random() * 6;
                 p.style.animationDuration = dur + 's';
                 p.style.animationDelay = -(Math.random() * 3) + 's';
-
-                // Apply the base CSS class
+// Apply the base CSS class
                 if (particleType === 'rain') {
                     p.classList.add('rain-drop');
                 } else if (particleType === 'snowflake') {
@@ -408,16 +536,15 @@
             // Initial ceiling state
             updateCeiling();
         })();
-
-        // ===== INIT =====
-        window.onload = () => {
-            if (typeof poetryCollection !== 'undefined') {
-                buildIndex();
-                showRandomPoem();
-                document.getElementById('toggle-index').onclick = toggleIndex;
-            } else {
-                document.getElementById('view').innerHTML = '<p>❌ poems.js missing</p>';
-            }
+                // ===== INIT =====
+                     window.onload = () => {
+                       if (typeof poetryCollection !== 'undefined') {
+                           buildIndex();
+                           showRandomPoem();
+                           document.getElementById('toggle-index').onclick = toggleIndex;
+                     } else {
+                            document.getElementById('view').innerHTML = '<p>❌ poems.js missing</p>';
+                     }
         };
     </script>
 </body>
